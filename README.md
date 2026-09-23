@@ -15,10 +15,11 @@ npm start          # http://localhost:3000
 
 ## How it works
 
-- `public/index.html` is the whole UI, styled with Tailwind via the CDN script tag in a
-  shadcn-like look (no build step). The file input uses `capture="environment"`, so on a
-  phone it opens the camera directly. The image is resized to 1024px JPEG in the browser
-  before upload.
+- `public/index.html` is the whole UI (no build step). `public/styles.css` is the
+  Modernist design system: tokens, type, and the light editorial layout. Photos render
+  in black and white (`grayscale(1) contrast(1.08)`). The file input uses
+  `capture="environment"`, so on a phone it opens the camera directly. The image is
+  resized to 1024px JPEG in the browser before upload.
 - `server.mjs` serves the page and exposes two endpoints. `POST /api/analyze` sends the
   image plus optional occasion and style notes to Claude with a JSON schema enforced via
   structured outputs, then builds shop links from the returned search queries.
@@ -39,17 +40,26 @@ npm start          # http://localhost:3000
 | `SERPAPI_API_KEY` | none | Optional. Same as above via [serpapi.com](https://serpapi.com), 100 free searches/month. |
 | `PEXELS_API_KEY` | none | Optional. Stock photos via [pexels.com/api](https://www.pexels.com/api). Not shoppable, but instant signup. |
 | `SHOP_GL` | `us` | Country code for shopping results, e.g. `in`, `gb`, `de` |
+| `PORT` | `3000` | HTTP port |
 
 Set only one image key. Priority if several are present: Serper, then SerpAPI, then Pexels.
 With none set, cards show text and search links only.
-| `PORT` | `3000` | HTTP port |
 
 ## Decisions we locked in
 
 - **Stack**: Node 22 built-in `http` + one static HTML page. Zero build step, one dependency.
-  Tailwind loads from the CDN, so the page needs network on first load (cached after).
-- **Inputs**: photo + optional occasion dropdown + optional free-text style notes.
-- **Output**: exactly three complementary pieces from different categories, not full outfits.
+  Styles ship with the page. Archivo still loads from Google Fonts on first visit.
+- **Inputs**: photo, who's wearing it (auto-detect, men, women, unisex), one of eight
+  occasions, and optional style notes. Quick chips append to the notes. Occasion cells
+  send the same strings the old dropdown did (`Night out` → `Party / night out`,
+  `Wedding / formal` → `Wedding / formal event`, Everyday sends nothing).
+- **Output**: exactly three complementary pieces from different categories, not a full outfit.
+  "The look" is your photo plus three tiles. "Shop the pieces" is one column
+  per suggestion: why it works, product shots when a provider is configured, Google
+  Shopping and Amazon links, and a button that copies the search query. "Not this one"
+  swaps that piece via `/api/swap` and fades the card while it runs.
+- **Errors**: not clothing, model refusal, and API failure all use the same
+  "Couldn't pair that" block.
 - **Shop links**: constructed search URLs, no API keys or scraping.
 - **Stateless**: nothing persisted.
 
