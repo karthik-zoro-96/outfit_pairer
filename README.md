@@ -8,23 +8,25 @@ it, each with a one-line reason and direct Google Shopping and Amazon search lin
 ```bash
 npm install
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
-npm start          # http://localhost:3000
+npm run dev        # http://localhost:3000
 ```
 
-`npm run dev` restarts the server on file changes.
+`npm run build && npm start` runs the production server. On Vercel, import the repo and
+leave the framework preset as Next.js. Set `ANTHROPIC_API_KEY` in the project settings.
+The analyze and swap routes allow up to 60 seconds.
 
 ## How it works
 
-- `public/index.html` is the whole UI (no build step). `public/styles.css` is the
-  Modernist design system: tokens, type, and the light editorial layout. Photos render
-  in black and white (`grayscale(1) contrast(1.08)`). The file input uses
+- `app/page.js` renders the UI. `public/styles.css` is the Modernist design system.
+  Photos render in black and white (`grayscale(1) contrast(1.08)`). The file input uses
   `capture="environment"`, so on a phone it opens the camera directly. The image is
   resized to 1024px JPEG in the browser before upload.
-- `server.mjs` serves the page and exposes two endpoints. `POST /api/analyze` sends the
-  image plus optional occasion and style notes to Claude with a JSON schema enforced via
-  structured outputs, then builds shop links from the returned search queries.
-  `POST /api/swap` replaces one suggestion in the same category, passing the rejected and
-  remaining items so the replacement is genuinely different.
+- `app/api/analyze/route.js` and `app/api/swap/route.js` are the two endpoints.
+  `POST /api/analyze` sends the image plus optional occasion and style notes to Claude
+  with a JSON schema enforced via structured outputs, then builds shop links from the
+  returned search queries. `POST /api/swap` replaces one suggestion in the same category,
+  passing the rejected and remaining items so the replacement is genuinely different.
+  The Claude and product-lookup code lives in `lib/stylist.js`.
 - No database, no accounts. Shop links are plain search URLs. Product thumbnails are an
   optional layer on top via serper.dev, looked up in parallel for the three suggestions.
 
@@ -40,15 +42,14 @@ npm start          # http://localhost:3000
 | `SERPAPI_API_KEY` | none | Optional. Same as above via [serpapi.com](https://serpapi.com), 100 free searches/month. |
 | `PEXELS_API_KEY` | none | Optional. Stock photos via [pexels.com/api](https://www.pexels.com/api). Not shoppable, but instant signup. |
 | `SHOP_GL` | `us` | Country code for shopping results, e.g. `in`, `gb`, `de` |
-| `PORT` | `3000` | HTTP port |
 
 Set only one image key. Priority if several are present: Serper, then SerpAPI, then Pexels.
 With none set, cards show text and search links only.
 
 ## Decisions we locked in
 
-- **Stack**: Node 22 built-in `http` + one static HTML page. Zero build step, one dependency.
-  Styles ship with the page. Archivo still loads from Google Fonts on first visit.
+- **Stack**: Next.js on Node 22. The page is a client component; the two API routes run
+  on the server, which is what Vercel deploys. Archivo still loads from Google Fonts.
 - **Inputs**: photo, who's wearing it (auto-detect, men, women, unisex), one of eight
   occasions, and optional style notes. Quick chips append to the notes. Occasion cells
   send the same strings the old dropdown did (`Night out` → `Party / night out`,
