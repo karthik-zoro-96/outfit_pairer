@@ -19,7 +19,7 @@ Open http://localhost:3000. `npm run build && npm start` runs the production ser
 ## Deploy on Vercel
 
 1. Import [karthik-zoro-96/outfit_pairer](https://github.com/karthik-zoro-96/outfit_pairer).
-2. Leave the framework preset as Next.js. Build command `npm run build`, output handled by Next.
+2. Set the framework preset to **Next.js**, not Other. Build command `npm run build`. `vercel.json` already requests the Next.js builder.
 3. Add `ANTHROPIC_API_KEY` in the project settings. Add a product-image key only if you want photos on the shop cards.
 4. Deploy.
 
