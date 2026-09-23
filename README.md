@@ -1,73 +1,70 @@
-# What goes with this?
+# Pairer
 
-Snap or upload a photo of one clothing item. Get three complementary pieces that pair with
-it, each with a one-line reason and direct Google Shopping and Amazon search links.
+Snap one clothing item. Get three pieces that go with it, each with a reason and a link to buy it.
 
-## Run it
+The page is called **What goes with this?** A photo goes in. The look comes back as your photo plus three tiles, then a shop column for each piece.
+
+## Run it locally
+
+Node 22.9 or newer.
 
 ```bash
 npm install
 echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env
-npm run dev        # http://localhost:3000
+npm run dev
 ```
 
-`npm run build && npm start` runs the production server. On Vercel, import the repo and
-leave the framework preset as Next.js. Set `ANTHROPIC_API_KEY` in the project settings.
-The analyze and swap routes allow up to 60 seconds.
+Open http://localhost:3000. `npm run build && npm start` runs the production server.
 
-## How it works
+## Deploy on Vercel
 
-- `app/page.js` renders the UI. `public/styles.css` is the Modernist design system.
-  Photos render in black and white (`grayscale(1) contrast(1.08)`). The file input uses
-  `capture="environment"`, so on a phone it opens the camera directly. The image is
-  resized to 1024px JPEG in the browser before upload.
-- `app/api/analyze/route.js` and `app/api/swap/route.js` are the two endpoints.
-  `POST /api/analyze` sends the image plus optional occasion and style notes to Claude
-  with a JSON schema enforced via structured outputs, then builds shop links from the
-  returned search queries. `POST /api/swap` replaces one suggestion in the same category,
-  passing the rejected and remaining items so the replacement is genuinely different.
-  The Claude and product-lookup code lives in `lib/stylist.js`.
-- No database, no accounts. Shop links are plain search URLs. Product thumbnails are an
-  optional layer on top via serper.dev, looked up in parallel for the three suggestions.
+1. Import [karthik-zoro-96/outfit_pairer](https://github.com/karthik-zoro-96/outfit_pairer).
+2. Leave the framework preset as Next.js. Build command `npm run build`, output handled by Next.
+3. Add `ANTHROPIC_API_KEY` in the project settings. Add a product-image key only if you want photos on the shop cards.
+4. Deploy.
 
-## Config (env vars)
+`/api/analyze` and `/api/swap` can run for up to 60 seconds. A Claude call plus product lookups needs that headroom.
 
-| Var | Default | Purpose |
+## Using it
+
+1. Take or upload one item. On a phone the file input opens the camera (`capture="environment"`). The browser resizes the photo to a 1024px JPEG before upload.
+2. Choose who is wearing it: auto-detect, men, women, or unisex. Auto-detect sends nothing and lets the model decide.
+3. Pick an occasion. Everyday sends nothing. The other cells send `Casual weekend`, `Work / office`, `Date night`, `Party / night out`, `Wedding / formal event`, `Travel`, or `Gym / athleisure`.
+4. Add style notes, or tap a chip to append one.
+5. Find matches.
+
+**The look** is your photo plus three tiles (first product image, category, and item name). **Shop the pieces** is one column per suggestion: why it works, product shots when a provider is configured, Google Shopping and Amazon links, and a button that copies the search text. **Not this one** asks for a different piece in that category and fades the card while it runs.
+
+Three failures share one block, **Couldn't pair that**: the photo is not clothing, the model refuses it, or the API errors.
+
+Photos are printed in black and white.
+
+## Environment
+
+The key stays on the server. It is never sent to the browser.
+
+| Variable | Default | Purpose |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | required | Server-side only, never sent to the browser |
-| `CLAUDE_MODEL` | `claude-sonnet-5` | Model to call (`claude-opus-5` for deeper suggestions) |
-| `CLAUDE_EFFORT` | `medium` | `low` / `medium` / `high` for speed vs. depth |
-| `AMAZON_TAG` | none | Optional Amazon affiliate tag appended to links |
-| `SERPER_API_KEY` | none | Optional. Real Google Shopping listings (image, price, store) via [serper.dev](https://serper.dev). |
-| `SERPAPI_API_KEY` | none | Optional. Same as above via [serpapi.com](https://serpapi.com), 100 free searches/month. |
-| `PEXELS_API_KEY` | none | Optional. Stock photos via [pexels.com/api](https://www.pexels.com/api). Not shoppable, but instant signup. |
-| `SHOP_GL` | `us` | Country code for shopping results, e.g. `in`, `gb`, `de` |
+| `ANTHROPIC_API_KEY` | required | Claude API key |
+| `CLAUDE_MODEL` | `claude-sonnet-5` | Model. `claude-opus-5` goes deeper and slower |
+| `CLAUDE_EFFORT` | `medium` | `low`, `medium`, or `high` |
+| `AMAZON_TAG` | none | Optional Amazon affiliate tag on shop links |
+| `SERPER_API_KEY` | none | Google Shopping listings from [serper.dev](https://serper.dev): image, price, store |
+| `SERPAPI_API_KEY` | none | Same listings from [serpapi.com](https://serpapi.com) |
+| `PEXELS_API_KEY` | none | Stock photos from [Pexels](https://www.pexels.com/api/). Not shoppable |
+| `SHOP_GL` | `us` | Country for shopping results, such as `in`, `gb`, or `de` |
 
-Set only one image key. Priority if several are present: Serper, then SerpAPI, then Pexels.
-With none set, cards show text and search links only.
+Set one image key. If several are set, Serper wins, then SerpAPI, then Pexels. With none set, the cards still show the item, the reason, and the search links.
 
-## Decisions we locked in
+## Layout
 
-- **Stack**: Next.js on Node 22. The page is a client component; the two API routes run
-  on the server, which is what Vercel deploys. Archivo still loads from Google Fonts.
-- **Inputs**: photo, who's wearing it (auto-detect, men, women, unisex), one of eight
-  occasions, and optional style notes. Quick chips append to the notes. Occasion cells
-  send the same strings the old dropdown did (`Night out` → `Party / night out`,
-  `Wedding / formal` → `Wedding / formal event`, Everyday sends nothing).
-- **Output**: exactly three complementary pieces from different categories, not a full outfit.
-  "The look" is your photo plus three tiles. "Shop the pieces" is one column
-  per suggestion: why it works, product shots when a provider is configured, Google
-  Shopping and Amazon links, and a button that copies the search query. "Not this one"
-  swaps that piece via `/api/swap` and fades the card while it runs.
-- **Errors**: not clothing, model refusal, and API failure all use the same
-  "Couldn't pair that" block.
-- **Shop links**: constructed search URLs, no API keys or scraping.
-- **Stateless**: nothing persisted.
+| Path | Role |
+|---|---|
+| `components/Pairer.js` | The page: photo, choices, results, errors |
+| `app/pairer.css` | Layout for that page |
+| `public/styles.css` | Modernist design system: color, type, spacing |
+| `app/api/analyze/route.js` | `POST /api/analyze` |
+| `app/api/swap/route.js` | `POST /api/swap` |
+| `lib/stylist.js` | Claude prompts, shop links, product lookup |
 
-## Rules for the build
-
-1. API key lives only in the server environment.
-2. Three failure paths handled explicitly in the UI: not clothing, model refusal, API error.
-3. Keep the project small enough to read in ten minutes.
-4. Every suggestion names a concrete, shoppable item with color and cut.
-5. Test with a real photo before calling anything done.
+Nothing is stored. There are no accounts. Shop links are search URLs, not scraped product pages.
