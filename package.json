@@ -1,0 +1,17 @@
+{
+  "name": "outfit-pairer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Snap a photo of a clothing item, get 3 pairing suggestions with shop links.",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node --watch --env-file-if-exists=.env server.mjs"
+  },
+  "engines": {
+    "node": ">=22.9"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}

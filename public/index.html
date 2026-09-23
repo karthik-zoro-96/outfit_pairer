@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f3f2f2" />
+<title>What goes with this?</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-body); }
+  button, textarea, input { font-family: inherit; }
+  img { filter: grayscale(1) contrast(1.08); }
+  [hidden] { display: none !important; }
+
+  .page { min-height: 100vh; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 48px) 64px; }
+
+  .site-header {
+    display: flex; align-items: center; gap: var(--space-4);
+    padding: var(--space-3) clamp(16px, 4vw, 48px);
+    border-bottom: 2px solid var(--color-divider);
+  }
+  .brand {
+    font-family: var(--font-heading); font-weight: 800; font-size: 18px;
+    margin-right: auto; display: flex; align-items: center; gap: 10px;
+  }
+  .brand-sq { width: 14px; height: 14px; background: var(--color-accent); }
+  .tagline { font-size: 13px; color: var(--color-neutral-700); }
+
+  .kicker {
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--color-accent-700); font-weight: 600;
+  }
+
+  .hero { display: grid; grid-template-columns: 1fr; border-bottom: 2px solid var(--color-divider); }
+  .hero-copy {
+    padding: clamp(28px, 5vw, 56px) 0;
+    display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-6);
+  }
+  .hero-title {
+    font-family: var(--font-heading); font-weight: 800;
+    font-size: clamp(48px, 7.4vw, 104px); line-height: 0.9; letter-spacing: -0.04em;
+    margin: var(--space-4) 0 0;
+  }
+  .lede { font-size: 17px; line-height: 1.45; margin: 0; max-width: 38ch; text-wrap: pretty; }
+
+  .photo {
+    position: relative; min-height: clamp(340px, 44vw, 540px);
+    margin-bottom: var(--space-6); background: var(--color-surface);
+  }
+  .photo.drag { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+  .file-input {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    pointer-events: none;
+  }
+  .photo-empty {
+    position: absolute; inset: 0; cursor: pointer; color: var(--color-text);
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;
+    gap: 6px; padding: clamp(20px, 3vw, 32px); text-align: left; background: var(--color-surface);
+  }
+  .photo-empty:hover { background: var(--color-accent-100); }
+  .photo-plus {
+    width: 48px; height: 48px; border: 2px solid var(--color-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; line-height: 1; margin-bottom: auto;
+  }
+  .photo-title {
+    font-family: var(--font-heading); font-weight: 800;
+    font-size: clamp(28px, 3vw, 40px); line-height: 1; letter-spacing: -0.02em;
+  }
+  .photo-hint { font-size: 14px; color: var(--color-neutral-700); }
+  .photo-filled { position: absolute; inset: 0; }
+  .photo-frame {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(135deg, var(--color-neutral-300) 0 10px, var(--color-neutral-200) 10px 20px);
+  }
+  .photo-frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .photo-bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    display: flex; justify-content: space-between; align-items: stretch;
+    background: var(--color-text); color: var(--color-bg);
+  }
+  .photo-name { padding: 12px 16px; font-size: 13px; font-weight: 600; }
+  .photo-change {
+    border-left: 1px solid var(--color-neutral-700); padding: 12px 16px;
+    font-size: 13px; font-weight: 800; cursor: pointer; color: var(--color-bg);
+  }
+  .photo-change:hover { background: var(--color-accent); }
+
+  @media (min-width: 760px) {
+    .hero { grid-template-columns: 1fr 1fr; }
+    .hero-copy { padding-right: clamp(0px, 3vw, 32px); }
+    .photo { border-left: 2px solid var(--color-divider); margin-bottom: 0; }
+  }
+
+  .inputs { display: grid; grid-template-columns: 1fr; border-bottom: 2px solid var(--color-divider); }
+  .cell { padding: var(--space-6) 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .cell-occ, .cell-notes { border-top: 2px solid var(--color-divider); }
+  @media (min-width: 640px) {
+    .inputs { grid-template-columns: 1fr 1fr; }
+    .cell-who { padding-right: var(--space-6); }
+    .cell-occ { padding-left: var(--space-6); border-top: 0; border-left: 2px solid var(--color-divider); }
+    .cell-notes { grid-column: 1 / -1; }
+  }
+  @media (min-width: 1000px) {
+    .inputs { grid-template-columns: 1fr 1fr 1fr; }
+    .cell-occ { padding-right: var(--space-6); }
+    .cell-notes {
+      grid-column: auto; padding-left: var(--space-6);
+      border-left: 2px solid var(--color-divider); border-top: 0;
+    }
+  }
+
+  .choice-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--color-divider); }
+  .choice {
+    border: 0; border-bottom: 1px solid var(--color-divider); border-right: 1px solid var(--color-divider);
+    margin: 0 -1px -1px 0; padding: 12px; font-size: 14px; cursor: pointer; text-align: left;
+    background: transparent; color: var(--color-text); font-weight: 400;
+  }
+  .choice[aria-pressed="true"] { background: var(--color-text); color: var(--color-bg); font-weight: 800; }
+  .choice:hover { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+  .notes {
+    width: 100%; min-height: 90px; resize: vertical; padding: 10px;
+    font-size: 14px; line-height: 1.5; color: var(--color-text); caret-color: var(--color-accent);
+    background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: 0; outline: none;
+  }
+  .notes:focus { border-color: var(--color-accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    border: 1px solid var(--color-divider); padding: 4px 10px; font-size: 12px; cursor: pointer;
+    background: transparent; color: var(--color-text); font-weight: 400;
+  }
+  .chip[aria-pressed="true"] { background: var(--color-text); color: var(--color-bg); border-color: var(--color-text); font-weight: 800; }
+
+  .find-bar { padding: var(--space-6) 0; border-bottom: 2px solid var(--color-divider); }
+  .find {
+    width: 100%; border: 0; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; background: var(--color-accent); color: var(--color-bg);
+    font-family: var(--font-heading); font-weight: 800; font-size: clamp(18px, 2vw, 24px);
+    letter-spacing: -0.01em; text-align: left;
+  }
+  .find:hover { background: var(--color-accent-600); }
+  .find:active { background: var(--color-accent-700); }
+  .find:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .loading { padding: clamp(32px, 5vw, 56px) 0; }
+  .load-list { margin-top: var(--space-4); border-top: 2px solid var(--color-divider); }
+  .load-step {
+    display: grid; grid-template-columns: 56px 1fr auto; align-items: baseline;
+    gap: var(--space-4); padding: 18px 0; border-bottom: 1px solid var(--color-divider);
+    color: var(--color-neutral-400);
+  }
+  .load-step .num { font-weight: 800; font-size: 14px; }
+  .load-step .label {
+    font-family: var(--font-heading); font-weight: 800;
+    font-size: clamp(22px, 3vw, 34px); letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .load-step .mark { font-size: 13px; font-weight: 600; }
+
+  .error-block {
+    padding: clamp(32px, 5vw, 56px) 0;
+    display: flex; flex-direction: column; gap: var(--space-3); align-items: flex-start;
+  }
+  .error-block h2 {
+    font-size: clamp(28px, 4vw, 44px); line-height: 1.02; letter-spacing: -0.025em;
+    margin: 0; max-width: 22ch;
+  }
+  .error-block p { font-size: 15px; margin: 0; max-width: 52ch; color: var(--color-neutral-800); }
+  .text-btn {
+    border: 1px solid var(--color-divider); background: transparent; padding: 10px 14px;
+    font-size: 14px; font-weight: 800; cursor: pointer; color: var(--color-text); text-align: left;
+  }
+  .text-btn:hover { background: var(--color-neutral-200); }
+
+  .shown {
+    padding: clamp(32px, 5vw, 56px) 0 var(--space-6);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+    gap: var(--space-6); align-items: end; border-bottom: 2px solid var(--color-divider);
+  }
+  .shown h2 {
+    font-size: clamp(32px, 4.6vw, 60px); line-height: 0.95; letter-spacing: -0.035em;
+    margin: var(--space-3) 0 0; text-wrap: balance;
+  }
+  .shown-meta { display: flex; flex-direction: column; gap: var(--space-3); }
+  .swatches { display: flex; border: 1px solid var(--color-divider); align-self: flex-start; flex-wrap: wrap; }
+  .swatch {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px;
+  }
+  .swatch + .swatch { border-left: 1px solid var(--color-divider); }
+  .swatch i { width: 12px; height: 12px; display: block; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tags span { font-size: 11px; padding: 3px 10px; background: var(--color-neutral-200); color: var(--color-neutral-800); }
+
+  .look { padding: var(--space-6) 0; border-bottom: 2px solid var(--color-divider); }
+  .section-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-4);
+  }
+  .section-note { font-size: 13px; color: var(--color-neutral-700); }
+  .look-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px; background: var(--color-divider); border: 2px solid var(--color-divider);
+  }
+  .look-tile, .look-yours {
+    margin: 0; background: var(--color-bg); display: flex; flex-direction: column;
+    text-decoration: none; color: var(--color-text); transition: opacity .25s ease;
+  }
+  .look-tile:hover { background: var(--color-accent-100); }
+  .tile-media {
+    position: relative; aspect-ratio: 3 / 4; overflow: hidden;
+    background: repeating-linear-gradient(135deg, var(--color-neutral-300) 0 10px, var(--color-neutral-200) 10px 20px);
+  }
+  .tile-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .tile-fallback {
+    position: absolute; left: 10px; bottom: 10px;
+    font-family: ui-monospace, monospace; font-size: 11px; color: var(--color-neutral-700);
+  }
+  .yours-badge {
+    position: absolute; left: 0; top: 0; background: var(--color-text); color: var(--color-bg);
+    font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 10px;
+  }
+  .tile-cap { padding: 12px; display: flex; flex-direction: column; gap: 2px; }
+  .tile-kicker { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+  .tile-kicker.yours { color: var(--color-neutral-700); font-weight: 400; }
+  .tile-kicker.pair { color: var(--color-accent-700); }
+  .tile-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+
+  .shop { padding: var(--space-6) 0 0; }
+  .shop-grid { display: grid; grid-template-columns: 1fr; border-top: 2px solid var(--color-divider); }
+  .piece {
+    padding: var(--space-6) 0; border-bottom: 2px solid var(--color-divider);
+    display: flex; flex-direction: column; gap: var(--space-3); transition: opacity .25s ease;
+  }
+  .piece-top { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
+  .piece-id { display: flex; align-items: baseline; gap: 10px; }
+  .piece-num {
+    font-family: var(--font-heading); font-weight: 800; font-size: 32px; line-height: 1;
+    color: var(--color-accent); letter-spacing: -0.03em;
+  }
+  .piece-cat { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-700); }
+  .swap-btn {
+    border: 0; background: transparent; color: var(--color-accent-700); font-weight: 800;
+    font-size: 13px; padding: 6px 4px; cursor: pointer; text-align: left;
+  }
+  .swap-btn:hover { background: var(--color-accent-100); }
+  .swap-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .piece h3 { font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; margin: 0; text-wrap: pretty; }
+  .why { font-size: 14px; line-height: 1.5; margin: 0; color: var(--color-neutral-800); text-wrap: pretty; flex: 1; }
+  .products { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .product { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: var(--color-text); }
+  .product:hover { color: var(--color-accent-700); }
+  .product-shot {
+    display: block; aspect-ratio: 1; overflow: hidden;
+    background: repeating-linear-gradient(135deg, var(--color-neutral-300) 0 6px, var(--color-neutral-200) 6px 12px);
+  }
+  .product-shot img { width: 100%; height: 100%; object-fit: cover; }
+  .product-meta { font-size: 11px; line-height: 1.3; }
+  .shop-links { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); margin-top: var(--space-1); }
+  .shop-google, .shop-amazon {
+    display: flex; justify-content: space-between; text-decoration: none;
+    padding: 10px 12px; font-family: var(--font-heading); font-weight: 800; font-size: 14px;
+  }
+  .shop-google { background: var(--color-text); color: var(--color-bg); }
+  .shop-google:hover { background: var(--color-accent); color: var(--color-bg); }
+  .shop-amazon { border: 1px solid var(--color-divider); color: var(--color-text); }
+  .shop-amazon:hover { background: var(--color-neutral-200); color: var(--color-text); }
+  .copy-btn {
+    border: 0; background: transparent; padding: 4px 0; font-size: 13px; cursor: pointer;
+    color: var(--color-neutral-700); text-align: left; align-self: flex-start;
+  }
+  .copy-btn:hover { color: var(--color-accent-700); }
+  .results-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: var(--space-3); flex-wrap: wrap; padding-top: var(--space-6);
+  }
+
+  @media (min-width: 1000px) {
+    .look-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .shop-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .shop-grid .piece { padding-left: var(--space-6); padding-right: var(--space-6); }
+    .shop-grid .piece:first-child { padding-left: 0; }
+    .shop-grid .piece:last-child { padding-right: 0; }
+    .shop-grid .piece + .piece { border-left: 2px solid var(--color-divider); }
+  }
+
+  .toast {
+    pointer-events: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--color-text); color: var(--color-bg); padding: 10px 16px;
+    font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="site-header">
+    <span class="brand"><span class="brand-sq"></span>Pairer</span>
+    <span class="tagline">One piece in. Three out.</span>
+  </header>
+
+  <main class="wrap">
+    <form id="form">
+      <section class="hero">
+        <div class="hero-copy">
+          <div>
+            <span class="kicker">01 — Show us the piece</span>
+            <h1 class="hero-title">What goes<br>with this?</h1>
+          </div>
+          <p class="lede">Snap one clothing item. We'll build the look around it — three pieces, each ready to buy.</p>
+        </div>
+
+        <div id="drop" class="photo">
+          <input type="file" id="file" class="file-input" accept="image/*" capture="environment" />
+          <label for="file" id="empty" class="photo-empty">
+            <span class="photo-plus">+</span>
+            <span class="photo-title">Take or upload a photo</span>
+            <span class="photo-hint">One item, flat or worn. Opens the camera on your phone.</span>
+          </label>
+          <div id="filled" class="photo-filled" hidden>
+            <div class="photo-frame">
+              <img id="preview" alt="Selected item" />
+            </div>
+            <div class="photo-bar">
+              <span id="filename" class="photo-name"></span>
+              <label for="file" class="photo-change">Change photo</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="inputs">
+        <div class="cell cell-who">
+          <span class="kicker">02 — Who's wearing it</span>
+          <div id="wearers" class="choice-grid" role="group" aria-label="Who's wearing it">
+            <button type="button" class="choice" data-value="" aria-pressed="true">Auto-detect</button>
+            <button type="button" class="choice" data-value="men">Men</button>
+            <button type="button" class="choice" data-value="women">Women</button>
+            <button type="button" class="choice" data-value="unisex">Unisex</button>
+          </div>
+        </div>
+        <div class="cell cell-occ">
+          <span class="kicker">03 — Occasion</span>
+          <div id="occasions" class="choice-grid" role="group" aria-label="Occasion">
+            <button type="button" class="choice" data-value="" aria-pressed="true">Everyday</button>
+            <button type="button" class="choice" data-value="Casual weekend">Casual weekend</button>
+            <button type="button" class="choice" data-value="Work / office">Work / office</button>
+            <button type="button" class="choice" data-value="Date night">Date night</button>
+            <button type="button" class="choice" data-value="Party / night out">Night out</button>
+            <button type="button" class="choice" data-value="Wedding / formal event">Wedding / formal</button>
+            <button type="button" class="choice" data-value="Travel">Travel</button>
+            <button type="button" class="choice" data-value="Gym / athleisure">Gym / athleisure</button>
+          </div>
+        </div>
+        <div class="cell cell-notes">
+          <span class="kicker">04 — Style notes</span>
+          <textarea id="notes" class="notes" rows="3" placeholder="Colors you avoid, budget, fit…"></textarea>
+          <div id="chips" class="chips">
+            <button type="button" class="chip" data-chip="I mostly wear dark colors">+ I mostly wear dark colors</button>
+            <button type="button" class="chip" data-chip="Budget-friendly">+ Budget-friendly</button>
+            <button type="button" class="chip" data-chip="Minimal / clean look">+ Minimal / clean look</button>
+            <button type="button" class="chip" data-chip="Streetwear vibe">+ Streetwear vibe</button>
+            <button type="button" class="chip" data-chip="No heels">+ No heels</button>
+            <button type="button" class="chip" data-chip="Keep it comfortable">+ Keep it comfortable</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="find-bar">
+        <button id="go" class="find" type="submit" disabled>
+          <span id="go-label">Add a photo to start</span><span aria-hidden="true">→</span>
+        </button>
+      </div>
+    </form>
+
+    <section id="loading" class="loading" hidden>
+      <span class="kicker">Working on it</span>
+      <div class="load-list">
+        <div class="load-step"><span class="num">01</span><span class="label">Reading the piece</span><span class="mark"></span></div>
+        <div class="load-step"><span class="num">02</span><span class="label">Matching color &amp; style</span><span class="mark"></span></div>
+        <div class="load-step"><span class="num">03</span><span class="label">Building your look</span><span class="mark"></span></div>
+      </div>
+    </section>
+
+    <section id="error" class="error-block" hidden>
+      <span class="kicker">Couldn't pair that</span>
+      <h2 id="error-title">That doesn't look like a clothing item.</h2>
+      <p id="error-detail"></p>
+      <button type="button" id="error-retry" class="text-btn">Try another photo</button>
+    </section>
+
+    <div id="result" hidden></div>
+  </main>
+</div>
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const fileInput = $("file"), drop = $("drop"), preview = $("preview"), emptyEl = $("empty"), filledEl = $("filled");
+  const goBtn = $("go"), goLabel = $("go-label");
+  const resultEl = $("result"), loadingEl = $("loading"), errorEl = $("error"), form = $("form");
+  const notesEl = $("notes"), toastEl = $("toast");
+
+  let imagePayload = null; // { base64, mediaType }
+  let busy = false;
+  let step = 0;
+  let state = null; // { item, suggestions, rejected, usage, swapping }
+  const MAX_EDGE = 1024;
+
+  const titleCase = (s) => String(s || "").replace(/\b\w/g, (c) => c.toUpperCase());
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const validColor = (c) => window.CSS && CSS.supports("color", c);
+
+  function pressedValue(groupId) {
+    const btn = document.querySelector(`#${groupId} [aria-pressed="true"]`);
+    return btn ? btn.dataset.value : "";
+  }
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => toastEl.classList.remove("show"), 1600);
+  }
+
+  function syncFind() {
+    const can = !!imagePayload && !busy;
+    goBtn.disabled = !can;
+    goLabel.textContent = busy
+      ? "Finding matches…"
+      : !imagePayload
+        ? "Add a photo to start"
+        : resultEl.hidden
+          ? "Find matches"
+          : "Find new matches";
+  }
+
+  function paintSteps() {
+    loadingEl.querySelectorAll(".load-step").forEach((row, i) => {
+      row.style.color = i <= step ? "var(--color-text)" : "var(--color-neutral-400)";
+      row.querySelector(".mark").textContent = i < step ? "Done" : i === step ? "…" : "";
+    });
+  }
+
+  function paintChips() {
+    document.querySelectorAll("#chips .chip").forEach((b) => {
+      const on = notesEl.value.includes(b.dataset.chip);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.textContent = (on ? "✓ " : "+ ") + b.dataset.chip;
+    });
+  }
+
+  function showError(title, detail) {
+    $("error-title").textContent = title;
+    $("error-detail").textContent = detail;
+    errorEl.hidden = false;
+    resultEl.hidden = true;
+    errorEl.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function loadAndResize(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, MAX_EDGE / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        URL.revokeObjectURL(url);
+        resolve({ dataUrl, base64: dataUrl.split(",")[1], mediaType: "image/jpeg" });
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not read that image.")); };
+      img.src = url;
+    });
+  }
+
+  function showImage(has) {
+    emptyEl.hidden = has;
+    filledEl.hidden = !has;
+    syncFind();
+  }
+
+  function clearPhoto() {
+    imagePayload = null;
+    fileInput.value = "";
+    preview.removeAttribute("src");
+    $("filename").textContent = "";
+    showImage(false);
+    errorEl.hidden = true;
+    syncFind();
+  }
+
+  async function handleFile(file) {
+    if (!file || !file.type.startsWith("image/")) { toast("Please pick an image file."); return; }
+    try {
+      const { dataUrl, base64, mediaType } = await loadAndResize(file);
+      preview.src = dataUrl;
+      $("filename").textContent = file.name || "photo";
+      showImage(true);
+      imagePayload = { base64, mediaType };
+      state = null;
+      resultEl.hidden = true;
+      errorEl.hidden = true;
+      syncFind();
+    } catch (e) { toast(e.message); }
+  }
+
+  fileInput.addEventListener("change", () => { const f = fileInput.files[0]; if (f) handleFile(f); });
+  ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => {
+    e.preventDefault();
+    if (ev === "dragleave" && drop.contains(e.relatedTarget)) return;
+    drop.classList.remove("drag");
+  }));
+  drop.addEventListener("drop", (e) => handleFile(e.dataTransfer.files[0]));
+
+  function bindChoices(id) {
+    $(id).addEventListener("click", (e) => {
+      const btn = e.target.closest(".choice");
+      if (!btn) return;
+      $(id).querySelectorAll(".choice").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+    });
+  }
+  bindChoices("wearers");
+  bindChoices("occasions");
+
+  $("chips").addEventListener("click", (e) => {
+    const b = e.target.closest(".chip");
+    if (!b) return;
+    const t = b.dataset.chip;
+    if (notesEl.value.includes(t)) return;
+    notesEl.value = (notesEl.value.trim() ? notesEl.value.trim().replace(/\.?$/, ". ") : "") + t + ".";
+    paintChips();
+  });
+  notesEl.addEventListener("input", paintChips);
+
+  function setBusy(on) {
+    busy = on;
+    loadingEl.hidden = !on;
+    clearInterval(setBusy.t);
+    if (on) {
+      step = 0;
+      paintSteps();
+      setBusy.t = setInterval(() => {
+        if (step < 2) { step += 1; paintSteps(); }
+      }, 2200);
+      loadingEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    syncFind();
+  }
+
+  function payload() {
+    return {
+      image: imagePayload.base64,
+      mediaType: imagePayload.mediaType,
+      audience: pressedValue("wearers"),
+      occasion: pressedValue("occasions"),
+      notes: notesEl.value.trim(),
+    };
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!imagePayload || busy) return;
+    setBusy(true);
+    resultEl.hidden = true;
+    errorEl.hidden = true;
+
+    try {
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload()),
+      });
+      const data = await res.json().catch(() => ({}));
+      setBusy(false);
+      if (!res.ok) {
+        if (data.error === "refused") {
+          showError("The model declined this photo.", data.message || "Try a different photo of one clothing item.");
+        } else {
+          showError("Something went wrong.", data.message || "Try again in a moment.");
+        }
+        return;
+      }
+      if (!data.is_clothing) {
+        const reason = data.message || "";
+        const generic = "That doesn't look like a clothing item.";
+        showError(generic, reason && reason !== generic
+          ? reason
+          : "Try a single top, bottom, shoe or accessory — flat on a surface or worn, in good light.");
+        return;
+      }
+      render(data);
+    } catch {
+      setBusy(false);
+      showError("Something went wrong.", "Network error. Is the server running?");
+    }
+  });
+
+  $("error-retry").addEventListener("click", clearPhoto);
+
+  function tileHtml({ href, image, alt, badge, kicker, kickerClass, title, fade, fallback }) {
+    const img = image
+      ? `<img src="${esc(image)}" alt="${esc(alt || "")}" ${href ? 'loading="lazy" referrerpolicy="no-referrer"' : ""} style="filter:grayscale(1) contrast(1.08)" onerror="this.remove()" />`
+      : "";
+    const body = `
+      <div class="tile-media">
+        ${img}
+        ${badge ? `<span class="yours-badge">${badge}</span>` : ""}
+        ${!image && fallback ? `<span class="tile-fallback">${esc(fallback)}</span>` : ""}
+      </div>
+      <div class="tile-cap">
+        <span class="tile-kicker ${kickerClass}">${kicker}</span>
+        <span class="tile-name">${title}</span>
+      </div>`;
+    const opacity = fade == null ? "" : ` style="opacity:${fade}"`;
+    if (href) return `<a class="look-tile" href="${href}"${opacity}>${body}</a>`;
+    return `<figure class="look-yours"${opacity}>${body}</figure>`;
+  }
+
+  function stripHtml() {
+    const you = tileHtml({
+      image: preview.src,
+      alt: "Your item",
+      badge: "Yours",
+      kicker: esc(titleCase(state.item.category)),
+      kickerClass: "yours",
+      title: esc(state.item.name),
+    });
+    const rest = state.suggestions.map((s, i) => {
+      const hero = s.products && s.products[0];
+      return tileHtml({
+        href: `#piece-${i + 1}`,
+        image: hero && hero.image ? hero.image : "",
+        alt: s.item,
+        kicker: `${String(i + 1).padStart(2, "0")} · ${esc(titleCase(s.category))}`,
+        kickerClass: "pair",
+        title: esc(s.item),
+        fade: state.swapping === i ? 0.4 : 1,
+        fallback: titleCase(s.category),
+      });
+    }).join("");
+    return you + rest;
+  }
+
+  function cardHtml(s, i) {
+    const fading = state.swapping === i;
+    const num = String(i + 1).padStart(2, "0");
+    const links = s.links || {};
+    const products = (s.products || []).map((p) => {
+      const meta = [p.price, p.source].filter(Boolean).map(esc).join(" · ") || esc(p.title);
+      return `
+        <a class="product" href="${esc(p.link)}" target="_blank" rel="noopener">
+          <span class="product-shot"><img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy" referrerpolicy="no-referrer" style="filter:grayscale(1) contrast(1.08)" onerror="this.remove()" /></span>
+          <span class="product-meta">${meta}</span>
+        </a>`;
+    }).join("");
+    return `
+      <article id="piece-${i + 1}" class="piece" style="opacity:${fading ? 0.4 : 1}">
+        <div class="piece-top">
+          <span class="piece-id">
+            <span class="piece-num">${num}</span>
+            <span class="piece-cat">${esc(titleCase(s.category))}</span>
+          </span>
+          <button type="button" class="swap-btn" data-swap="${i}" ${fading ? "disabled" : ""}>${fading ? "Finding…" : "Not this one ↻"}</button>
+        </div>
+        <h3>${esc(s.item)}</h3>
+        <p class="why">${esc(s.why)}</p>
+        ${products ? `<div class="products">${products}</div>` : ""}
+        <div class="shop-links">
+          <a class="shop-google" href="${esc(links.google || "#")}" target="_blank" rel="noopener"><span>Google Shopping</span><span>↗</span></a>
+          <a class="shop-amazon" href="${esc(links.amazon || "#")}" target="_blank" rel="noopener"><span>Amazon</span><span>↗</span></a>
+        </div>
+        <button type="button" class="copy-btn" data-copy="${esc(s.search_query)}">Copy search text</button>
+      </article>`;
+  }
+
+  function lookSummary() {
+    const whoBtn = document.querySelector("#wearers [aria-pressed='true']");
+    const occBtn = document.querySelector("#occasions [aria-pressed='true']");
+    const who = whoBtn && whoBtn.dataset.value
+      ? whoBtn.textContent.trim()
+      : `${titleCase(state.item.audience || "unisex")} (detected)`;
+    return `${occBtn ? occBtn.textContent.trim() : "Everyday"} · ${who}`;
+  }
+
+  function redrawSuggestions() {
+    $("strip").innerHTML = stripHtml();
+    $("grid").innerHTML = state.suggestions.map(cardHtml).join("");
+    $("look-summary").textContent = lookSummary();
+    $("usage").textContent = `tokens in ${state.usage.input_tokens} · out ${state.usage.output_tokens}`;
+  }
+
+  async function swapSuggestion(i) {
+    if (!state || state.swapping !== null) return;
+    const old = state.suggestions[i];
+    const cat = old.category;
+    state.rejected[cat] = [...(state.rejected[cat] || []), old.item];
+    state.swapping = i;
+    redrawSuggestions();
+
+    try {
+      const res = await fetch("/api/swap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...payload(),
+          item: state.item,
+          category: cat,
+          rejected: state.rejected[cat],
+          current: state.suggestions.filter((_, j) => j !== i).map((s) => s.item),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { toast(data.message || "Couldn't swap that one."); return; }
+      state.suggestions[i] = data.suggestion;
+      state.usage.input_tokens += data.usage.input_tokens;
+      state.usage.output_tokens += data.usage.output_tokens;
+    } catch {
+      toast("Network error while swapping.");
+    } finally {
+      state.swapping = null;
+      redrawSuggestions();
+    }
+  }
+
+  function swatchHtml(c) {
+    if (!validColor(c)) return `<span class="swatch">${esc(c)}</span>`;
+    const light = /^(white|#fff|#ffffff)$/i.test(String(c).trim());
+    const edge = light ? "box-shadow:inset 0 0 0 1px var(--color-neutral-500)" : "";
+    return `<span class="swatch"><i style="background:${esc(c)};${edge}"></i>${esc(c)}</span>`;
+  }
+
+  function render(data) {
+    state = { item: data.item, suggestions: data.suggestions, rejected: {}, usage: { ...data.usage }, swapping: null };
+    const it = data.item;
+    const colors = (it.colors || []).map(swatchHtml).join("");
+    const tags = [it.pattern, it.style, it.formality, it.audience].filter(Boolean).map((t) => `<span>${esc(t)}</span>`).join("");
+
+    resultEl.innerHTML = `
+      <section class="shown">
+        <div>
+          <span class="kicker">You showed us</span>
+          <h2>${esc(it.name)}</h2>
+        </div>
+        <div class="shown-meta">
+          ${colors ? `<div class="swatches">${colors}</div>` : ""}
+          <div class="tags">${tags}</div>
+        </div>
+      </section>
+      <section class="look">
+        <div class="section-head">
+          <span class="kicker">The look</span>
+          <span id="look-summary" class="section-note"></span>
+        </div>
+        <div id="strip" class="look-grid"></div>
+      </section>
+      <section class="shop">
+        <div class="section-head">
+          <span class="kicker">Shop the pieces</span>
+          <span class="section-note">Not feeling one? Swap it — the rest of the look stays.</span>
+        </div>
+        <div id="grid" class="shop-grid"></div>
+        <div class="results-foot">
+          <span id="usage" class="section-note"></span>
+          <button type="button" id="reset" class="text-btn">Try another item</button>
+        </div>
+      </section>`;
+    redrawSuggestions();
+    errorEl.hidden = true;
+    resultEl.hidden = false;
+    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    syncFind();
+
+    resultEl.onclick = async (e) => {
+      const copyBtn = e.target.closest("[data-copy]");
+      if (copyBtn) {
+        const text = copyBtn.dataset.copy;
+        try { await navigator.clipboard.writeText(text); copyBtn.textContent = "Copied ✓"; toast("Copied: " + text); }
+        catch { toast(text); }
+        clearTimeout(copyBtn._t);
+        copyBtn._t = setTimeout(() => { copyBtn.textContent = "Copy search text"; }, 1400);
+        return;
+      }
+      const swapBtn = e.target.closest("[data-swap]");
+      if (swapBtn) swapSuggestion(Number(swapBtn.dataset.swap));
+    };
+    $("reset").addEventListener("click", () => {
+      state = null;
+      clearPhoto();
+      resultEl.hidden = true;
+      resultEl.innerHTML = "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+</script>
+</body>
+</html>
