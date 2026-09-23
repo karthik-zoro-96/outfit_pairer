@@ -31,7 +31,7 @@ Open http://localhost:3000. `npm run build && npm start` runs the production ser
 2. Choose who is wearing it: auto-detect, men, women, or unisex. Auto-detect sends nothing and lets the model decide.
 3. Pick an occasion. Everyday sends nothing. The other cells send `Casual weekend`, `Work / office`, `Date night`, `Party / night out`, `Wedding / formal event`, `Travel`, or `Gym / athleisure`.
 4. Add style notes, or tap a chip to append one.
-5. Find matches.
+5. Find matches. Each browser gets 5 tries. A match and a swap each use one.
 
 **The look** is your photo plus three tiles (first product image, category, and item name). **Shop the pieces** is one column per suggestion: why it works, product shots when a provider is configured, Google Shopping and Amazon links, and a button that copies the search text. **Not this one** asks for a different piece in that category and fades the card while it runs.
 

@@ -114,6 +114,11 @@ export default function Pairer() {
   const [swapping, setSwapping] = useState(null);
   const [toast, setToast] = useState("");
   const [copied, setCopied] = useState(null);
+  const [triesLeft, setTriesLeft] = useState(null);
+
+  function rememberTries(data) {
+    if (typeof data?.tries_remaining === "number") setTriesLeft(data.tries_remaining);
+  }
 
   function showToast(msg) {
     setToast(msg);
@@ -180,7 +185,7 @@ export default function Pairer() {
 
   async function onSubmit(e) {
     e.preventDefault();
-    if (!image || busyRef.current) return;
+    if (!image || busyRef.current || triesLeft === 0) return;
     busyRef.current = true;
     setBusy(true);
     setError(null);
@@ -192,8 +197,11 @@ export default function Pairer() {
         body: JSON.stringify(requestBody()),
       });
       const data = await res.json().catch(() => ({}));
+      rememberTries(data);
       if (!res.ok) {
-        if (data.error === "refused") {
+        if (data.error === "rate_limit") {
+          setError({ title: "That's your 5 tries.", detail: data.message || "You've used all 5 tries on this browser." });
+        } else if (data.error === "refused") {
           setError({ title: "The model declined this photo.", detail: data.message || "Try a different photo of one clothing item." });
         } else {
           setError({ title: "Something went wrong.", detail: data.message || "Try again in a moment." });
@@ -227,7 +235,7 @@ export default function Pairer() {
   }
 
   async function onSwap(i) {
-    if (!result || swapLock.current || !image) return;
+    if (!result || swapLock.current || !image || triesLeft === 0) return;
     swapLock.current = true;
     const old = result.suggestions[i];
     const cat = old.category;
@@ -246,6 +254,7 @@ export default function Pairer() {
         })),
       });
       const data = await res.json().catch(() => ({}));
+      rememberTries(data);
       if (!res.ok) {
         showToast(data.message || "Couldn't swap that one.");
         return;
@@ -281,13 +290,20 @@ export default function Pairer() {
     setTimeout(() => setCopied((current) => (current === i ? null : current)), 1400);
   }
 
-  const findLabel = busy
-    ? "Finding matches…"
-    : !image
-      ? "Add a photo to start"
-      : result
-        ? "Find new matches"
-        : "Find matches";
+  const findLabel = triesLeft === 0
+    ? "That's your 5 tries"
+    : busy
+      ? "Finding matches…"
+      : !image
+        ? "Add a photo to start"
+        : result
+          ? "Find new matches"
+          : "Find matches";
+  const triesNote = triesLeft === null
+    ? "Five tries on this browser. A match or a swap uses one."
+    : triesLeft === 0
+      ? "You've used all 5 tries on this browser."
+      : `${triesLeft} ${triesLeft === 1 ? "try" : "tries"} left on this browser.`;
 
   const whoLabel = audience
     ? WEARERS.find((w) => w.value === audience)?.label
@@ -394,9 +410,10 @@ export default function Pairer() {
           </section>
 
           <div className="find-bar">
-            <button className="find" type="submit" disabled={!image || busy}>
+            <button className="find" type="submit" disabled={!image || busy || triesLeft === 0}>
               <span>{findLabel}</span><span aria-hidden="true">→</span>
             </button>
+            <p className="section-note" style={{ margin: "12px 0 0" }}>{triesNote}</p>
           </div>
         </form>
 
@@ -488,7 +505,7 @@ export default function Pairer() {
                           <span className="piece-num">{String(i + 1).padStart(2, "0")}</span>
                           <span className="piece-cat">{titleCase(s.category)}</span>
                         </span>
-                        <button type="button" className="swap-btn" disabled={fading} onClick={() => onSwap(i)}>
+                        <button type="button" className="swap-btn" disabled={fading || triesLeft === 0} onClick={() => onSwap(i)}>
                           {fading ? "Finding…" : "Not this one ↻"}
                         </button>
                       </div>
